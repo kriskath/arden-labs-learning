@@ -26,7 +26,46 @@ func main() {
 	fmt.Println(v)
 
 	fmt.Println(sleepSort([]int{20, 30, 10})) // [10 20 30]
+
+	go func() {
+		for i := range 4 {
+			ch <- i
+		}
+		close(ch)
+	}()
+
+	// produces deadlock if channel is not closed.
+	for v := range ch {
+		fmt.Println(">>", v)
+	}
+
+	v = <-ch // ch is closed
+	fmt.Println("closed", v)
+	v, ok := <-ch // ch is closed
+	fmt.Println("closed", v, "ok:", ok)
+
+	/* The "for range" above does
+	for {
+		v, ok := <- ch
+		if !ok {
+			break
+		}
+		fmt.Println(">>", v
+	}
+	*/
+
+	// var ch chan int // ch is nil
 }
+
+/* Channel semantics
+- send/receive to/from a channel will block until opposite operation(*)
+	- guarantee of delivery
+- receive from a closed channel will return zero value without blocking
+	- use "comma ok" to check if channel was closed
+- send to a closed channel will panic
+- closing a closed or nil channel will panic
+- send/receive to a nil channel will block forever
+*/
 
 /*
 	Algorithim
